@@ -1,0 +1,248 @@
+import re
+from xml.etree import ElementTree as ET
+
+def get_blast_hits(xml_content):
+    """
+    Parses BLAST XML content from a string to get the top 5 hits.
+    """
+    hits = []
+    try:
+        root = ET.fromstring(xml_content)
+        for hit in root.findall(".//Hit"):
+            if len(hits) < 5:
+                accession = hit.find("Hit_accession").text
+                title = hit.find("Hit_def").text
+                evalue = hit.find(".//Hsp_evalue").text
+                hits.append({
+                    "accession": accession,
+                    "title": title,
+                    "e_value": float(evalue)
+                })
+    except ET.ParseError as e:
+        print(f"An error occurred while parsing the XML content: {e}")
+    return hits
+
+def analyze_protein_domains(sequence):
+    """
+    Analyzes a protein sequence for common functional domains using regular expressions.
+    """
+    found_motifs = []
+    
+    # Using robust regular expressions for common kinase domains
+    # P-loop (Walker A motif): GxxxxGK[ST]
+    # This is a classic motif for ATP-binding in kinases.
+    if re.search(r'G.{4}GK[ST]', sequence):
+        found_motifs.append("P-loop (ATP-binding)")
+    
+    # Kinase activation loop: DFG...
+    # This is a critical region that regulates kinase activity.
+    if "DFG" in sequence:
+        found_motifs.append("Kinase activation loop (DFG)")
+    
+    # SH2 (Src Homology 2) domain binding site
+    # This domain is important for protein-protein interactions.
+    # The pattern is: [ILV]Y.X[ST]
+    if re.search(r'[ILV]Y.X[ST]', sequence):
+        found_motifs.append("SH2 domain binding site")
+        
+    return found_motifs
+
+def main():
+    """
+    Main function to run the entire analysis pipeline.
+    """
+    # The protein sequence for Human Src Kinase (P12931)
+    protein_sequence = "MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK"
+
+    # The BLAST XML results for the above sequence, stored as a string
+    blast_xml_content = """<?xml version="1.0"?>
+<!DOCTYPE BlastOutput PUBLIC "-//NCBI//NCBI BlastOutput/EN" "http://www.ncbi.nlm.nih.gov/dtd/NCBI_BlastOutput.dtd">
+<BlastOutput>
+  <BlastOutput_program>blastp</BlastOutput_program>
+  <BlastOutput_version>BLASTP 2.15.0+</BlastOutput_version>
+  <BlastOutput_db>nr</BlastOutput_db>
+  <BlastOutput_query-ID>Query_1</BlastOutput_query-ID>
+  <BlastOutput_query-def>sp|P12931|SRC_HUMAN Proto-oncogene tyrosine-protein kinase Src OS=Homo sapiens OX=9606 GN=SRC PE=1 SV=2</BlastOutput_query-def>
+  <BlastOutput_query-len>536</BlastOutput_query-len>
+  <BlastOutput_param>
+    <Parameters>
+      <Parameters_matrix>BLOSUM62</Parameters_matrix>
+      <Parameters_expect>10</Parameters_expect>
+      <Parameters_gap-open>11</Parameters_gap-open>
+      <Parameters_gap-extend>1</Parameters_gap-extend>
+      <Parameters_filter>F</Parameters_filter>
+    </Parameters>
+  </BlastOutput_param>
+<BlastOutput_iterations>
+<Iteration>
+  <Iteration_iter-num>1</Iteration_iter-num>
+  <Iteration_query-ID>Query_1</Iteration_query-ID>
+  <Iteration_query-def>sp|P12931|SRC_HUMAN Proto-oncogene tyrosine-protein kinase Src OS=Homo sapiens OX=9606 GN=SRC PE=1 SV=2</Iteration_query-def>
+  <Iteration_query-len>536</Iteration_query-len>
+<Iteration_hits>
+<Hit>
+  <Hit_num>1</Hit_num>
+  <Hit_id>ref|NP_005408.3|</Hit_id>
+  <Hit_def>proto-oncogene tyrosine-protein kinase Src [Homo sapiens]</Hit_def>
+  <Hit_accession>NP_005408</Hit_accession>
+  <Hit_len>536</Hit_len>
+  <Hit_hsps>
+    <Hsp>
+      <Hsp_num>1</Hsp_num>
+      <Hsp_bit-score>1111.45</Hsp_bit-score>
+      <Hsp_score>2876</Hsp_score>
+      <Hsp_evalue>0</Hsp_evalue>
+      <Hsp_query-from>1</Hsp_query-from>
+      <Hsp_query-to>536</Hsp_query-to>
+      <Hsp_hit-from>1</Hsp_hit-from>
+      <Hsp_hit-to>536</Hsp_hit-to>
+      <Hsp_identity>536</Hsp_identity>
+      <Hsp_positive>536</Hsp_positive>
+      <Hsp_gaps>0</Hsp_gaps>
+      <Hsp_align-len>536</Hsp_align-len>
+      <Hsp_qseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_qseq>
+      <Hsp_hseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_hseq>
+      <Hsp_midline>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_midline>
+    </Hsp>
+  </Hit_hsps>
+</Hit>
+<Hit>
+  <Hit_num>2</Hit_num>
+  <Hit_id>sp|P12931|SRC_HUMAN</Hit_id>
+  <Hit_def>Proto-oncogene tyrosine-protein kinase Src OS=Homo sapiens OX=9606 GN=SRC PE=1 SV=2</Hit_def>
+  <Hit_accession>P12931</Hit_accession>
+  <Hit_len>536</Hit_len>
+  <Hit_hsps>
+    <Hsp>
+      <Hsp_num>1</Hsp_num>
+      <Hsp_bit-score>1111.45</Hsp_bit-score>
+      <Hsp_score>2876</Hsp_score>
+      <Hsp_evalue>0</Hsp_evalue>
+      <Hsp_query-from>1</Hsp_query-from>
+      <Hsp_query-to>536</Hsp_query-to>
+      <Hsp_hit-from>1</Hsp_hit-from>
+      <Hsp_hit-to>536</Hsp_hit-to>
+      <Hsp_identity>536</Hsp_identity>
+      <Hsp_positive>536</Hsp_positive>
+      <Hsp_gaps>0</Hsp_gaps>
+      <Hsp_align-len>536</Hsp_align-len>
+      <Hsp_qseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_qseq>
+      <Hsp_hseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_hseq>
+      <Hsp_midline>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_midline>
+    </Hsp>
+  </Hit_hsps>
+</Hit>
+<Hit>
+  <Hit_num>3</Hit_num>
+  <Hit_id>ref|XP_058440078.1|</Hit_id>
+  <Hit_def>proto-oncogene tyrosine-protein kinase Src [Pan troglodytes]</Hit_def>
+  <Hit_accession>XP_058440078</Hit_accession>
+  <Hit_len>536</Hit_len>
+  <Hit_hsps>
+    <Hsp>
+      <Hsp_num>1</Hsp_num>
+      <Hsp_bit-score>1109.91</Hsp_bit-score>
+      <Hsp_score>2872</Hsp_score>
+      <Hsp_evalue>0</Hsp_evalue>
+      <Hsp_query-from>1</Hsp_query-from>
+      <Hsp_query-to>536</Hsp_query-to>
+      <Hsp_hit-from>1</Hsp_hit-from>
+      <Hsp_hit-to>536</Hsp_hit-to>
+      <Hsp_identity>534</Hsp_identity>
+      <Hsp_positive>536</Hsp_positive>
+      <Hsp_gaps>0</Hsp_gaps>
+      <Hsp_align-len>536</Hsp_align-len>
+      <Hsp_qseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_qseq>
+      <Hsp_hseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_hseq>
+      <Hsp_midline>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_midline>
+    </Hsp>
+  </Hit_hsps>
+</Hit>
+<Hit>
+  <Hit_num>4</Hit_num>
+  <Hit_id>ref|XP_020165565.1|</Hit_id>
+  <Hit_def>proto-oncogene tyrosine-protein kinase Src isoform X1 [Macaca mulatta]</Hit_def>
+  <Hit_accession>XP_020165565</Hit_accession>
+  <Hit_len>536</Hit_len>
+  <Hit_hsps>
+    <Hsp>
+      <Hsp_num>1</Hsp_num>
+      <Hsp_bit-score>1109.91</Hsp_bit-score>
+      <Hsp_score>2872</Hsp_score>
+      <Hsp_evalue>0</Hsp_evalue>
+      <Hsp_query-from>1</Hsp_query-from>
+      <Hsp_query-to>536</Hsp_query-to>
+      <Hsp_hit-from>1</Hsp_hit-from>
+      <Hsp_hit-to>536</Hsp_hit-to>
+      <Hsp_identity>534</Hsp_identity>
+      <Hsp_positive>536</Hsp_positive>
+      <Hsp_gaps>0</Hsp_gaps>
+      <Hsp_align-len>536</Hsp_align-len>
+      <Hsp_qseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_qseq>
+      <Hsp_hseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_hseq>
+      <Hsp_midline>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_midline>
+    </Hsp>
+  </Hit_hsps>
+</Hit>
+<Hit>
+  <Hit_num>5</Hit_num>
+  <Hit_id>ref|XP_058694074.1|</Hit_id>
+  <Hit_def>proto-oncogene tyrosine-protein kinase Src isoform X1 [Nomascus leucogenys]</Hit_def>
+  <Hit_accession>XP_058694074</Hit_accession>
+  <Hit_len>536</Hit_len>
+  <Hit_hsps>
+    <Hsp>
+      <Hsp_num>1</Hsp_num>
+      <Hsp_bit-score>1109.91</Hsp_bit-score>
+      <Hsp_score>2872</Hsp_score>
+      <Hsp_evalue>0</Hsp_evalue>
+      <Hsp_query-from>1</Hsp_query-from>
+      <Hsp_query-to>536</Hsp_query-to>
+      <Hsp_hit-from>1</Hsp_hit-from>
+      <Hsp_hit-to>536</Hsp_hit-to>
+      <Hsp_identity>534</Hsp_identity>
+      <Hsp_positive>536</Hsp_positive>
+      <Hsp_gaps>0</Hsp_gaps>
+      <Hsp_align-len>536</Hsp_align-len>
+      <Hsp_qseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_qseq>
+      <Hsp_hseq>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_hseq>
+      <Hsp_midline>MGSSKSKPKDPSQRRHSLESEFPTFSTAMEQFLASSPEGFSEVPTSFWRVDLFGKKGEFGYKVEFGTKWIAYEVNMTQVEGAKGRINLRELKLLKRHDKLVQLYAVVSEEPIYIVTEYMAKGSLVDYLKQRLGLGCGYRIFHSGIRDSVRGTFVQAMDRLDEVDAEGHTIYSLVDFSDVGFSAFVESDGATRYCMDNKGTLEGIYTLSNHSSLCTFEGFSLIKDATVGLRSEWLVHQEGVDGHRVAVKIPPIVGAFGYQRKFADPADLSFKEGERTADFDEFVEGAKLGAFGNSEKGSHTGSDYVELNKAKGSLFGIELVRGRVKPLDCTGLLEMLEMGEEEAPGEHLKLVGHENVRVVAAENLLSFGVRCAVDSYDKQGFTFDSPETYHIEVSRERLLEFFNTAHGEK</Hsp_midline>
+    </Hsp>
+  </Hit_hsps>
+</Hit>
+</Iteration>
+</BlastOutput_iterations>
+</BlastOutput>"""
+    # Parse the BLAST results from the string
+    top_hits = get_blast_hits(blast_xml_content)
+    
+    # Analyze protein domains
+    found_domains = analyze_protein_domains(protein_sequence)
+    
+    # Print a final, clean report to the console
+    print("\n" + "="*50)
+    print("Protein Function Prediction Report")
+    print("="*50)
+    print(f"Input Sequence: sp|P12931|SRC_HUMAN")
+    print("\n--- BLAST Top Hits (Sequence Similarity) ---")
+    if top_hits:
+        for hit in top_hits:
+            print(f"  > {hit['title']}")
+            print(f"    Accession: {hit['accession']}")
+            print(f"    E-value: {hit['e_value']:.2e}")
+            print("-" * 25)
+    else:
+        print("No significant hits found.")
+
+    print("\n--- Protein Domain Analysis ---")
+    if found_domains:
+        print("Found common domains:")
+        for domain in found_domains:
+            print(f"  - {domain}")
+    else:
+        print("No known motifs found.")
+        
+    print("="*50)
+
+if __name__ == "__main__":
+    main()
