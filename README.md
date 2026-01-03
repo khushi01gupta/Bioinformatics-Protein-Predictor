@@ -1,5 +1,5 @@
 APOE SNP Analyzer for Personalized Medicine
-🧬 Project Overview
+Project Overview
 This is a concise Python tool that simulates personalized genetic risk analysis by examining a patient's genotype for a Single Nucleotide Polymorphism (SNP) associated with Alzheimer's disease risk.
 
 The project demonstrates core bioinformatics skills in diagnostic interpretation and conditional logic applied to human genetic data.
