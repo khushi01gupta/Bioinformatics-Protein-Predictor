@@ -1,70 +1,64 @@
-APOE SNP Analyzer for Personalized Medicine
+APOE SNP Analyzer: Genetic Risk Simulation
 Project Overview
-This is a concise Python tool that simulates personalized genetic risk analysis by examining a patient's genotype for a Single Nucleotide Polymorphism (SNP) associated with Alzheimer's disease risk.
 
-The project demonstrates core bioinformatics skills in diagnostic interpretation and conditional logic applied to human genetic data.
+This Python-based bioinformatics tool simulates personalized genetic risk assessment by analyzing Single Nucleotide Polymorphisms (SNPs). Specifically, it targets the rs429358 locus on the APOE gene, which is a primary genetic determinant of late-onset Alzheimer’s disease.
 
-Core Genetic Principle: APOE Gene Risk
+This project demonstrates how conditional logic is applied to genomic data to translate raw genotypes into clear clinical risk interpretations.
 
-The analysis focuses on the APOE gene (rs429358), which determines the APOE ϵ4 allele presence. The ϵ4 allele is strongly linked to an increased lifetime risk of developing Alzheimer's disease.
+Biological Context: The APOE Gene
 
-Genotype
+The APOE gene provides instructions for producing apolipoprotein E, a protein that combines with fats in the body to form lipoproteins. The variant at the rs429358 locus determines the presence of the ε4 allele.
 
-Alleles
+Genotype Risk Mapping
 
-Estimated Risk
+Genotype	Alleles	Risk Phenotype	Clinical Interpretation
+E4/E4	CC	Significantly Increased	Highest genetic risk; two copies of the risk allele.
+E3/E4	TC	Increased	Elevated risk; one copy of the ε4 allele present.
+E3/E3	TT	Typical	Baseline population risk; the most common genotype.
+Features
 
-Interpretation
+Genotype Parsing: Validates and processes user-provided SNP data.
 
-E4/E4
+Risk Logic Engine: Maps specific allele combinations to established clinical risk categories.
 
-Two Cysteine alleles (CC)
+Bioinformatics Reporting: Generates a structured clinical report within the terminal.
 
-Significantly Increased Risk
+Getting Started
 
-Highest risk level.
+Prerequisites
 
-E3/E4
+Python 3.x (This is a lightweight version and does not require external libraries like pandas or Biopython).
 
-One Threonine (T), one Cysteine (C)
+Installation
 
-Increased Risk
+Clone this repository: git clone https://github.com/yourusername/apoe-snp-analyzer.git
 
-Elevated risk compared to general population.
+Navigate to the directory: cd apoe-snp-analyzer
 
-E3/E3
+Running the Analyzer Open the script and modify the patient_input variable to test different genotypes. For example: patient_input = 'TC'
 
-Two Threonine alleles (TT)
+Then run the program: python apoe_analyzer.py
 
-Typical Population Risk
+Sample Output
 
-Baseline risk.
-
-Execution and Setup
-Requirements
-
-The project only requires standard Python 3.
-
-How to Run the Analyzer
-
-You can modify the patient_input variable in the main() function to test different genotypes ('TT', 'TC', or 'CC').
-
+Plaintext
 ==================================================
-APOE SNP Analyzer for Alzheimer's Risk
+        APOE SNP ANALYZER: CLINICAL REPORT
 ==================================================
-Personalized Medicine Simulation
--------------------------
-Gene Locus Analyzed: APOE (rs429358)
-Genotype Input: TC
-Alleles Found: Allele 1: T, Allele 2: C
-
---- Risk Assessment ---
-APOE Genotype: E3/E4 (Threonine/Cysteine)
-Estimated Risk: Increased Risk
-
-Note: The presence of one E4 (Cysteine) allele increases lifetime risk compared to E3/E3.
+Locus:             rs429358 (APOE)
+Genotype detected: TC
+Allele 1:          T (Threonine)
+Allele 2:          C (Cysteine)
+--------------------------------------------------
+RESULT:            E3/E4
+RISK LEVEL:        INCREASED RISK
+--------------------------------------------------
+NOTES:
+The presence of a single C (Cysteine) allele at this 
+locus indicates the E4 variant, which is associated 
+with an increased risk of Alzheimer's compared to 
+the baseline E3/E3 population.
 ==================================================
+Medical Disclaimer
 
-
-
-
+This tool is intended for educational and simulation purposes only. Genetic risk is multifactorial; the presence of an ε4 allele does not guarantee an Alzheimer's diagnosis, nor does its absence guarantee immunity. This software should not be used for medical diagnosis or clinical decision-making.
